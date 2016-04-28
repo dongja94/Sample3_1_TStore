@@ -5,10 +5,10 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.begentgroup.xmlparser.XMLParser;
 
@@ -23,14 +23,16 @@ public class MainActivity extends AppCompatActivity {
 
     EditText keywordView;
     ListView listView;
-    ArrayAdapter<Product> mAdapter;
+//    ArrayAdapter<Product> mAdapter;
+    ProductAdapter mAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         keywordView = (EditText)findViewById(R.id.edit_input);
         listView = (ListView)findViewById(R.id.listView);
-        mAdapter = new ArrayAdapter<Product>(this, android.R.layout.simple_list_item_1);
+//        mAdapter = new ArrayAdapter<Product>(this, android.R.layout.simple_list_item_1);
+        mAdapter = new ProductAdapter();
         listView.setAdapter(mAdapter);
 
         Button btn = (Button)findViewById(R.id.btn_search);
@@ -39,7 +41,22 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String keyword = keywordView.getText().toString();
                 if (!TextUtils.isEmpty(keyword)) {
-                    new SearchTask().execute(keyword);
+//                    new SearchTask().execute(keyword);
+                    NetworkManager.getInstance().getNetworkData(new TStoreRequest(keyword), new NetworkManager.OnResultListener<TStore>() {
+                        @Override
+                        public void onSuccess(NetworkRequest<TStore> request, TStore result) {
+                            if (result != null) {
+                                for (Product p : result.products.productList) {
+                                    mAdapter.add(p);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFail(NetworkRequest<TStore> request, int code, String message, Throwable throwable, String body) {
+                            Toast.makeText(MainActivity.this, "fail...", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         });
